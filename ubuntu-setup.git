@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# Verificar que el usuario sea root
+if [ "$EUID" -ne 0 ]; then
+    echo "❌ Este script debe ejecutarse como root o con sudo."
+    exit 1
+fi
+
+# Verificar la versión de Ubuntu
+UBUNTU_VERSION=$(lsb_release -r | awk '{print $2}')
+if [ "$UBUNTU_VERSION" != "22.04" ]; then
+    echo "❌ Este script solo se ejecuta en Ubuntu 22.04. Su versión es $UBUNTU_VERSION"
+    exit 1
+fi
+
+echo "✅ Versión de Ubuntu validada: $UBUNTU_VERSION"
+echo "🔄 Actualizando paquetes..."
+apt update -y && apt upgrade -y
+
+# Instalar Apache
+echo "🔧 Instalando Apache..."
+apt install -y apache2
+systemctl enable apache2
+systemctl start apache2
+echo "✅ Apache instalado y en ejecución."
+
+# Instalar Node.js y npm
+echo "🔧 Instalando Node.js y npm..."
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+apt install -y nodejs
+echo "✅ Node.js y npm instalados."
+echo "📌 Versión instalada de Node.js: $(node -v)"
+echo "📌 Versión instalada de npm: $(npm -v)"
+
+# Instalar MySQL Server
+echo "🔧 Instalando MySQL Server..."
+apt install -y mysql-server
+systemctl enable mysql
+systemctl start mysql
+
+# Configurar MySQL root password (se puede personalizar)
+MYSQL_ROOT_PASSWORD="SecurePass123!"
+echo "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '${MYSQL_ROOT_PASSWORD}'; FLUSH PRIVILEGES;" | mysql -u root
+echo "✅ MySQL instalado y configurado."
+echo "📌 Recuerda cambiar la contraseña por una segura: $MYSQL_ROOT_PASSWORD"
+
+# Instalar React (Create React App)
+echo "🔧 Instalando Create-React-App..."
+npm install -g create-react-app
+echo "✅ Create-React-App instalado."
+
+# Verificación final
+echo "🔍 Validando instalaciones..."
+echo "🌍 Apache: $(apache2 -v | grep 'Server version')"
+echo "🛠 Node.js: $(node -v)"
+echo "📦 npm: $(npm -v)"
+echo "⚛️ React: $(create-react-app --version)"
+echo "🗄️ MySQL: $(mysql --version)"
+
+echo "🎉 Instalación completada con éxito. ¡Tu entorno está listo!"
